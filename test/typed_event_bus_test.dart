@@ -10,9 +10,9 @@ enum Events {
 }
 
 void main() {
-  late TypedEventBus<Events> bus;
+  late TypedEventBus bus;
 
-  setUpAll(() => bus = TypedEventBus<Events>());
+  setUpAll(() => bus = TypedEventBus());
 
   tearDownAll(() {
     bus.dispose();
@@ -21,27 +21,32 @@ void main() {
   test('catch events', () async {
     final completer = Completer();
     final result = <dynamic>[];
-    final subscription = bus.onEvent(Events.test, () {
-      result.add(null);
-    }).onDataEvent<String>(Events.testWithData, (data) {
-      result.add(data);
-    }).onDataEvent<int>(Events.testWithData, (data) {
-      result.add(data);
-    }).onDataEvent(Events.testWithData, (data) {
-      result.add(data);
-    }).onData<String>((data) {
-      result.add(data);
-    }).onEvent(Events.finish, () {
+    final subscription = bus.onEvent<TestEvent>((_) {
+      result.add('Hello');
+    }).onEvent<TestDataEvent>((data) {
+      result.add(data.message);
+    }).onEvent<FinallyEvent>((_) {
+      result.add('bus');
       completer.complete();
     });
 
-    bus.emit(Events.test);
-    bus.emit(Events.testWithData, 'test');
-    bus.emit(Events.testWithData, 1);
-    bus.emit(Events.finish);
+    bus.emit<TestEvent>(TestEvent());
+    bus.emit(TestDataEvent('from'));
+    await Future.delayed(Duration(seconds: 1));
+    bus.emit(FinallyEvent());
     await completer.future;
     expect(completer.isCompleted, isTrue);
-    expect(result, [null, 'test', 'test', 'test', 1, 1]);
+    expect(result.join(' '), 'Hello from bus');
     subscription.dispose();
   });
 }
+
+class TestEvent {}
+
+class TestDataEvent {
+  final String message;
+
+  TestDataEvent(this.message);
+}
+
+class FinallyEvent {}

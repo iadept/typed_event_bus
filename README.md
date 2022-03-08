@@ -10,31 +10,26 @@ To use this plugin, add `typed_event_bus` as a [dependency in your pubspec.yaml 
 ``` dart
 import 'package:typed_event_bus/typed_event_bus.dart';
 
-enum Events {
-  test,
-  testWithData,
+class TestEvent {}
+
+class TestDataEvent {
+  final String message;
+
+  TestDataEvent(this.message);
 }
 
 void main() {
-  final bus = TypedEventBus<Events>();
+  final bus = TypedEventBus();
 
-  final subscription = bus.onEvent(Events.test, () {
-    print('Catch test event');
-  }).onDataEvent<String>(Events.testWithData, (data) {
-    print('only testWithData with String: $data');
-  }).onDataEvent<int>(Events.testWithData, (data) {
-    print('only testWithData with int: $data');
-  }).onDataEvent(Events.testWithData, (data) {
-    print('all testWithData: $data');
-  }).onData<DateTime>((data) {
-    print('all events with DateTime: $data');
+  final subscription = bus.onEvent<TestEvent>((_) {
+    print('Catch only TestEvent data');
+  }).onEvent<TestDataEvent>((data) {
+    print('Catch only TestDataEvent data');
+    print('With message ${data.message}')
   });
 
-  bus.emit(Events.test);
-  bus.emit(Events.testWithData, 'Hi');
-  bus.emit(Events.testWithData, 1);
-  bus.emitData('Hi');
-  bus.emitData(DateTime.now());
+  bus.emit<TestEvent>(TestEvent());
+  bus.emit(TestDataEvent('from'));
 
   subscription.dispose();
   bus.dispose();
