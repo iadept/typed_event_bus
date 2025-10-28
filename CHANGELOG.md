@@ -1,3 +1,7 @@
+## 1.2.1
+
+* Updating dependency constraints
+
 ## 1.2.0
 
 * Delete filter by id
